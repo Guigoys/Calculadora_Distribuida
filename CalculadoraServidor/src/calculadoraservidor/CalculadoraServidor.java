@@ -28,7 +28,7 @@ public class CalculadoraServidor {
                 in = new DataInputStream(elsocket.getInputStream());
                 out = new DataOutputStream(elsocket.getOutputStream());
 
-                out.writeUTF("Servidor-"+Servidor.getLocalPort());
+                out.writeUTF("Servidor "+Servidor.getLocalPort());
 
                 mensaje = in.readUTF();
                 System.out.println(mensaje);

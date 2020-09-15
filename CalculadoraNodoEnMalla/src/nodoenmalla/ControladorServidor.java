@@ -17,47 +17,61 @@ import java.util.logging.Logger;
  *
  * @author Hp
  */
-public class ControladorCliente  implements Runnable{
+public class ControladorServidor implements Runnable{
     
-    public ServerSocket EscuchaCliente;
+    public ServerSocket SocketServidor;
     int puerto_I;
-    int Cliente;
+    int Servidor;
 
-    public ControladorCliente(int Num_Nodo, int puerto_I, int Cliente) {
+    public ControladorServidor(int Num_Nodo, int puerto_I, int Servidor) {
         try {
-             this.EscuchaCliente = new ServerSocket(Num_Nodo);
+             this.SocketServidor = new ServerSocket(Num_Nodo);
          } catch (IOException ex) {
              Logger.getLogger(ControladorNodo.class.getName()).log(Level.SEVERE, null, ex);
          }
         this.puerto_I = puerto_I;
-        this.Cliente = Cliente;
+        this.Servidor = Servidor;
     }
+
+    
     
     @Override
     public void run() {
-        System.out.println("Yo escucho al cliente en "+ Cliente);
+        System.out.println("Yo escucho al servidor de " +  Servidor);
         while(true)
         {
              Socket elsocket;
              String Mensaje="";
+             String Resultado ="";
             try{
-               System.out.println("Se acaba de conectar "+EscuchaCliente.getLocalPort());
-               elsocket = EscuchaCliente.accept();
+               System.out.println("Se acaba de conectar "+SocketServidor.getLocalPort());
+               elsocket = SocketServidor.accept();
                DataInputStream in = new DataInputStream(elsocket.getInputStream());
                DataOutputStream out = new DataOutputStream(elsocket.getOutputStream());
                Mensaje = in.readUTF();
-               System.out.println(Mensaje );
+               System.out.println(Mensaje);
                elsocket.close();
            } catch (IOException ex) {
             System.out.println("Fallo la conexion");
            }
-           String Nodos ="";
-           try {
+            try {
+                Socket Operar = new Socket("127.0.0.1",Servidor);
+                DataOutputStream outO = new DataOutputStream(Operar.getOutputStream());
+                DataInputStream inO = new DataInputStream(Operar.getInputStream());
+                outO.writeUTF(Mensaje);
+                Resultado = inO.readUTF();
+                Operar.close();
+
+            } catch (IOException ex) {
+                System.out.println("Fallo, error en la conexcion");
+            }
+            String Nodos ="";
+            try {
                 Socket Pedir_nodos = new Socket("127.0.0.1",puerto_I);
                 DataInputStream in = new DataInputStream(Pedir_nodos.getInputStream());
                 DataOutputStream out = new DataOutputStream(Pedir_nodos.getOutputStream());
 
-                out.writeUTF(Mensaje);
+                out.writeUTF(Resultado);
                 Nodos = in.readUTF();
                 System.out.println(Nodos);
                 Pedir_nodos.close();
@@ -65,20 +79,20 @@ public class ControladorCliente  implements Runnable{
             } catch (IOException ex) {
                 System.out.println("Fallo, error en la conexcion");
             }
-           String[] Nodo = Nodos.split(" ");
-           for (int  i = 0; i < Nodo.length;i++)
+            System.out.println(Nodos);
+            String[] Nodo = Nodos.split(" ");
+            for (int  i = 0; i < Nodo.length;i++)
            {
                 try {
                     Socket Enviar = new Socket("127.0.0.1",Integer.parseInt(Nodo[i]));
                     DataOutputStream outE = new DataOutputStream(Enviar.getOutputStream());
 
-                    outE.writeUTF(Mensaje);
+                    outE.writeUTF(Resultado);
                     Enviar.close();
 
                 } catch (IOException ex) {
                     System.out.println("Fallo, error en la conexcion");
                 }
-                
            }
         }
     }

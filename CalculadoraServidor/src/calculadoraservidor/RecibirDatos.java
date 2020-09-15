@@ -31,8 +31,9 @@ import java.net.Socket;
                 DataOutputStream out = new DataOutputStream(elsocket.getOutputStream());
                 String Mensaje = in.readUTF();
                 System.out.println(Mensaje);
-                double resultado = opera(Mensaje);
-                out.writeUTF(Mensaje+" = "+resultado);
+                String resultado = opera(Mensaje); 
+                out.writeUTF(resultado);
+                System.out.println(resultado);
                 elsocket.close();
              } catch (IOException ex) {
                  System.out.println("Fallo la conexion");
@@ -40,32 +41,38 @@ import java.net.Socket;
         }
     }
 
-     public static double opera(String Total)
+     public static String opera(String Total)
     {
         String[] arrSplit = Total.split(" ");   
         double num1 =Double.parseDouble(arrSplit[1]);
         double num2 =Double.parseDouble(arrSplit[2]);
 
         double res=0;
+        String Op="";
         switch(arrSplit[0])
         {
             case "1":
                 res=num1+num2;
+                Op="5";
                 break;
             case "2":
                 res=num1-num2;
+                Op="6";
                 break;
             case "3":
                 res=num1*num2;
+                Op="7";
                 break;
             case "4":
                 res=num1/num2;
+                Op="8";
                 break;
             default:
                 res=num1;
                 break;
         }
-        return res;  
+        String Res = Op + " "+arrSplit[1]+ " "+ arrSplit[2] +" " + res;
+        return Res;  
     }
 
 }

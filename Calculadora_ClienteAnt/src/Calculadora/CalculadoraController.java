@@ -99,7 +99,7 @@ public class CalculadoraController implements Initializable {
                 in = new DataInputStream(elsocket.getInputStream());
                 out = new DataOutputStream(elsocket.getOutputStream());
 
-                out.writeUTF("Cliente-"+Llegada.getLocalPort());
+                out.writeUTF("Cliente "+Llegada.getLocalPort());
 
                 mensaje = in.readUTF();
                 if (Integer.parseInt(mensaje) !=0)
@@ -342,27 +342,26 @@ public class CalculadoraController implements Initializable {
                 } catch (IOException ex) {
                     System.out.println("Fallo la conexion");
                 }
-                String[] arrSplit = Mensaje.split("-");
-                if(arrSplit[0].indexOf("Res")!= -1)
+                String[] arrSplit = Mensaje.split(" ");
+                if(Integer.parseInt(arrSplit[0]) >= 5)
                 {
-                    String[] arrSplit2 = arrSplit[1].split(" ");
                     String Total ="";
-                    switch (arrSplit2[0])
+                    switch (arrSplit[0])
                     {
-                        case "1":
-                            Total = arrSplit2[1] +" + "+  arrSplit2[2]+ " "+ arrSplit2[3] + " " + arrSplit2[4];
+                        case "5":
+                            Total = arrSplit[1] +" + "+  arrSplit[2]+ " = " + arrSplit[3];
                             ImpSuma.appendText(Total + "\n");
                             break;
-                        case "2":
-                            Total = arrSplit2[1] +" - "+  arrSplit2[2]+ " "+ arrSplit2[3] + " " + arrSplit2[4];
+                        case "6":
+                            Total = arrSplit[1] +" - "+  arrSplit[2]+ " = " + arrSplit[3];
                             ImpRest.appendText(Total+ "\n");
                             break;
-                        case "3":
-                            Total = arrSplit2[1] +" * "+  arrSplit2[2]+ " "+ arrSplit2[3] + " " + arrSplit2[4];
+                        case "7":
+                            Total = arrSplit[1] +" * "+  arrSplit[2]+ " = " + arrSplit[3];
                             ImpMult.appendText(Total+ "\n");
                             break;
-                        case "4":
-                            Total = arrSplit2[1] +" / "+  arrSplit2[2]+ " "+ arrSplit2[3] + " " + arrSplit2[4];
+                        case "8":
+                            Total = arrSplit[1] +" / "+  arrSplit[2]+ " = " + arrSplit[3];
                             ImpDivi.appendText(Total+ "\n");
                             break;
                     }

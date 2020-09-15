@@ -48,38 +48,85 @@ public class ControladorNodo implements Runnable{
                DataInputStream in = new DataInputStream(elsocket.getInputStream());
                DataOutputStream out = new DataOutputStream(elsocket.getOutputStream());
                Mensaje = in.readUTF();
-               
-               System.out.println(Mensaje);
+               System.out.println("Algo se trata de comunicar"+Mensaje);
                elsocket.close();
                
            } catch (IOException ex) {
             System.out.println("Fallo la conexion");
            }
-           if(Mensaje.indexOf("Res")== -1)
+           String[] Identificar = Mensaje.split(" ");
+           if(Integer.parseInt(Identificar[0])>=5) //lego un resultado
            {
-               try {
+               System.out.println("Fue un servidor");
+               String Nodos ="";
+                try {
                     Socket Pedir_nodos = new Socket("127.0.0.1",puerto_I);
+                    DataInputStream in = new DataInputStream(Pedir_nodos.getInputStream());
                     DataOutputStream out = new DataOutputStream(Pedir_nodos.getOutputStream());
 
-                    out.writeUTF("Operacion-"+Mensaje);
+                    out.writeUTF(Mensaje);
+                    Nodos = in.readUTF();
+                    System.out.println(Nodos);
                     Pedir_nodos.close();
 
-               } catch (IOException ex) {
+                } catch (IOException ex) {
                     System.out.println("Fallo, error en la conexcion");
-               }
-           }
-           else{
-               try {
-                Socket Pedir_nodos = new Socket("127.0.0.1",puerto_I);
-                DataOutputStream out = new DataOutputStream(Pedir_nodos.getOutputStream());
+                }
+                String[] Nodo = Nodos.split(" ");
+                for(int i=0; i< Nodo.length;i++)
+                {
+                    if(Nodo[i].indexOf("6")!=-1)
+                    {
+                        try {
+                            Socket Enviar = new Socket("127.0.0.1",Integer.parseInt(Nodo[i]));
+                            DataOutputStream outE = new DataOutputStream(Enviar.getOutputStream());
 
-                out.writeUTF(Mensaje);
-                Pedir_nodos.close();
+                            outE.writeUTF(Mensaje);
+                            Enviar.close();
 
-           } catch (IOException ex) {
-                System.out.println("Fallo, error en la conexcion");
-           }
-           }
+                        } catch (IOException ex) {
+                            System.out.println("Fallo, error en la conexcion");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                System.out.println("Fue un Cliente");
+                String Nodos ="";
+                try {
+                    Socket Pedir_nodos = new Socket("127.0.0.1",puerto_I);
+                    DataInputStream in = new DataInputStream(Pedir_nodos.getInputStream());
+                    DataOutputStream out = new DataOutputStream(Pedir_nodos.getOutputStream());
+
+                    out.writeUTF(Mensaje);
+                    Nodos = in.readUTF();
+                    System.out.println(Nodos);
+                    Pedir_nodos.close();
+
+                } catch (IOException ex) {
+                    System.out.println("Fallo, error en la conexcion");
+                }
+                String[] Nodo = Nodos.split(" ");
+                String Puerto_Server = ""+(puerto_I+199);
+                for(int i=0; i< Nodo.length;i++)
+                {
+                    System.out.println(Nodo[i]);
+                    if(Nodo[i].indexOf(Puerto_Server)!=-1)
+                    {
+                        try {
+                            Socket Enviar = new Socket("127.0.0.1",Integer.parseInt(Nodo[i]));
+                            DataOutputStream outE = new DataOutputStream(Enviar.getOutputStream());
+
+                            outE.writeUTF(Mensaje);
+                            Enviar.close();
+
+                        } catch (IOException ex) {
+                            System.out.println("Fallo, error en la conexcion");
+                        }
+                    }
+                }
+            }
            
         }
     }
