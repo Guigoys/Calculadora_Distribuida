@@ -1,0 +1,13 @@
+Cliente java->
+
+java --module-path "C:\Program Files\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.fxml -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\Calculadora_ClienteAnt\dist\Calculadora_ClienteAnt.jar"
+
+*****************************************************************************
+Nodo ->
+
+java -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\ClasesJava\CalculadoraNodoEnMalla\dist\CalculadoraNodoEnMalla.jar"
+
+*****************************************************************************
+Servidor ->
+
+java -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\ClasesJava\CalculadoraServidor\dist\CalculadoraServidor.jar"
