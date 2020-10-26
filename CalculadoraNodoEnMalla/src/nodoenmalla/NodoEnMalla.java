@@ -21,31 +21,32 @@ public class NodoEnMalla {
     
     public static void main(String[] args) throws IOException {
         int cliente = -5;
-        int servidor= -5;
-        
+        int servidor= 0;  
         ServerSocket Serv = create(8000);
         int mipuerto = Serv.getLocalPort();
         String HOST ="127.0.0.1";
         DataInputStream in;
         DataOutputStream out;
         int puertos = 8000;
+        int cont=1;
         while(mipuerto > puertos)
         {
             try {
                 Socket elsocket = new Socket(HOST,puertos);
                 in = new DataInputStream(elsocket.getInputStream());
                 out = new DataOutputStream(elsocket.getOutputStream());
-                out.writeUTF("Nodo "+mipuerto);
+                out.writeUTF("Nodo "+(mipuerto+cont));
                 elsocket.close();
                 puertos = puertos +200;
             }catch (IOException ex) {
                 System.out.println("Fallo, error en la conexcion para los demas");
             }
+            cont++;
         }
         
         for(int i = 0 ;i< Nodos.size();i++)
         {
-            ControladorNodo NuevoHilo = new ControladorNodo(mipuerto+i+1,mipuerto,Nodos.get(i)+Nodos.size());
+            ControladorNodo NuevoHilo = new ControladorNodo(mipuerto+i+1,mipuerto,Nodos.get(i));
             Thread t = new Thread(NuevoHilo);
             ar.add(NuevoHilo);
             t.start();
@@ -62,6 +63,7 @@ public class NodoEnMalla {
                 String Mensaje = inn.readUTF();
                 System.out.println(Mensaje);
                 String[] arrSplit = Mensaje.split(" ");
+                
                 switch(arrSplit[0])
                 {
                     case "Nodo":
@@ -72,7 +74,8 @@ public class NodoEnMalla {
                         t1.start();
                         break;
                     case "¿Queeres?":
-                        outn.writeUTF("Nodo");
+                        outn.writeUTF("Nodo "+(mipuerto+cont));
+                        cont++;
                         break;
                     case "Cliente":
                         if (cliente !=-5)
@@ -89,28 +92,50 @@ public class NodoEnMalla {
                         }
                         break;
                     case "Servidor":
-                        if (servidor !=-5)
+                        if (servidor >= 5)
                         {
                            outn.writeUTF("0");
                         }else
                         {
-                            servidor = Integer.parseInt(arrSplit[1]);
-                            outn.writeUTF(""+(mipuerto+199));
-                            ControladorServidor Servidor = new ControladorServidor(mipuerto+199,mipuerto,Integer.parseInt(arrSplit[1]));
+                            Servidores.add(mipuerto+servidor+190);
+                            outn.writeUTF(""+(mipuerto+servidor+190));
+                            ControladorServidor Servidor = new ControladorServidor(mipuerto+servidor+190,mipuerto,Integer.parseInt(arrSplit[1]));
                             Thread tCl = new Thread(Servidor);
                             servi.add(Servidor);
                             tCl.start();
+                            servidor++;
                         }
+                        break;
+                    case "0":
+                        String X = "";
+                        for(int i =0;i<Nodos.size();i++)
+                        {
+                            X= X + Nodos.get(i) + " ";
+                        }
+                        
+                        if (servidor != 0)
+                        {
+                            for(int i =0;i<Servidores.size();i++)
+                            {
+                                X= X + Servidores.get(i) + " ";
+                            }
+                        }
+                        System.out.println(X);
+                        outn.writeUTF(X);
                         break;
                     case "1":
                         String A = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            A= A + (Nodos.get(i)+i+1) + " ";
+                            A= A + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                        
+                        if (servidor != 0)
                         {
-                            A= A + (mipuerto + 199);
+                            for(int i =0;i<Servidores.size();i++)
+                            {
+                                A= A + Servidores.get(i) + " ";
+                            }
                         }
                         System.out.println(A);
                         outn.writeUTF(A);
@@ -119,11 +144,14 @@ public class NodoEnMalla {
                         String B = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            B= B + (Nodos.get(i)+i+1) + " ";
+                            B= B + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                         if (servidor != 0)
                         {
-                            B= B + (mipuerto + 199);
+                            for(int i =0;i<Servidores.size();i++)
+                            {
+                                B= B + Servidores.get(i) + " ";
+                            }
                         }
                         System.out.println(B);
                         outn.writeUTF(B);
@@ -132,11 +160,14 @@ public class NodoEnMalla {
                         String C = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            C= C + (Nodos.get(i)+i+1) + " ";
+                            C= C + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                         if (servidor != 0)
                         {
-                            C= C + (mipuerto + 199);
+                            for(int i =0;i<Servidores.size();i++)
+                            {
+                                C= C + Servidores.get(i) + " ";
+                            }
                         }
                         System.out.println(C);
                         outn.writeUTF(C);
@@ -145,22 +176,26 @@ public class NodoEnMalla {
                         String D = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            D= D + (Nodos.get(i)+i+1) + " ";
+                            D= D + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                         if (servidor != 0)
                         {
-                            D= D + (mipuerto + 199);
+                            for(int i =0;i<Servidores.size();i++)
+                            {
+                                D= D + Servidores.get(i) + " ";
+                            }
                         }
                         System.out.println(D);
                         outn.writeUTF(D);
                         break;
                     case "5":
+                        System.out.println("Llego el resultado de la suma para el cliente " + cliente);
                         String E = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            E= E + (Nodos.get(i)+i+1) + " ";
+                            E= E + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                        if (cliente != -5)
                         {
                             E= E + cliente;
                         }
@@ -171,9 +206,9 @@ public class NodoEnMalla {
                         String F = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            F= F + (Nodos.get(i)+i+1) + " ";
+                            F= F + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                        if (cliente != -5)
                         {
                             F= F + cliente;
                         }
@@ -184,9 +219,9 @@ public class NodoEnMalla {
                         String G = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            G= G + (Nodos.get(i)+i+1) + " ";
+                            G= G + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                        if (cliente != -5)
                         {
                             G= G + cliente;
                         }
@@ -197,77 +232,45 @@ public class NodoEnMalla {
                         String H = "";
                         for(int i =0;i<Nodos.size();i++)
                         {
-                            H= H + (Nodos.get(i)+i+1) + " ";
+                            H= H + Nodos.get(i) + " ";
                         }
-                        if (servidor != -5)
+                        if (cliente != -5)
                         {
                             H= H + cliente;
                         }
                         System.out.println(H);
                         outn.writeUTF(H);
                         break;
-                        
-                    case "Operacion":
-                        String Res1="";
-                        if(servidor !=-5)
+                    case "9":
+                        int acliente = cliente;
+                        switch(arrSplit[2])
                         {
-                            try {
-                                Socket Pedir_nodos = new Socket("127.0.0.1",servidor);
-                                DataOutputStream outForS = new DataOutputStream(Pedir_nodos.getOutputStream());
-                                DataInputStream inFromS = new DataInputStream(Pedir_nodos.getInputStream());
-                                outForS.writeUTF(arrSplit[1]);
-                                Res1= "Res "+inFromS.readUTF();
-                                System.out.println(Res1);
-                                Pedir_nodos.close();
-
-                            } catch (IOException ex) {
-                                System.out.println("Fallo, error en la conexcion");
-                            }
-                            for(int j=0;j<Nodos.size();j++)
-                            {
-
-                                try{
-                                    Socket Avisar = new Socket("127.0.0.1",(Nodos.get(j)+j+1));
-                                    DataOutputStream OutA = new DataOutputStream(Avisar.getOutputStream());
-
-                                    OutA.writeUTF(Res1);
-                                    Avisar.close();
-                                }
-                                catch (IOException ex){
-                                    System.out.println("No se pudo conectar con "+mipuerto+j+1);
-                                }
-                            }
-                             if (cliente != -5)
-                            {
-                                try {
-                                    System.out.println("Queremos mandar info al cliente");
-                                    Socket Pedir_nodos = new Socket("127.0.0.1",cliente);
-                                    DataOutputStream outForC = new DataOutputStream(Pedir_nodos.getOutputStream());
-                                    outForC.writeUTF(Res1);
-                                    Pedir_nodos.close();
-
-                                } catch (IOException ex) {
-                                    System.out.println("Fallo, error en la conexcion");
-                                }
-                            }
-                            
+                            case "1":
+                                acliente = cliente +1;
+                                break;
+                            case "2":
+                                acliente = cliente +2;
+                                break;
+                            case "3":
+                                acliente = cliente +3;
+                                break;
+                            case "4":
+                                acliente = cliente +4;
+                                break;
                         }
-                        break;
-                    case "Res":
+                        String I = "";
+                        for(int i =0;i<Nodos.size();i++)
+                        {
+                            I= I + Nodos.get(i) + " ";
+                        }
                         if (cliente != -5)
                         {
-                            try {
-                                System.out.println("Queremos mandar info al cliente");
-                                Socket Pedir_nodos = new Socket("127.0.0.1",cliente);
-                                DataOutputStream outForC = new DataOutputStream(Pedir_nodos.getOutputStream());
-                                outForC.writeUTF(Mensaje);
-                                Pedir_nodos.close();
-
-                            } catch (IOException ex) {
-                                System.out.println("Fallo, error en la conexcion");
-                            }
+                            I= I + acliente;
                         }
+                        System.out.println(I);
+                        outn.writeUTF(I);
                         break;
+
                     default:
                         System.out.println("No se identifico");
                         break;
@@ -276,7 +279,6 @@ public class NodoEnMalla {
              } catch (IOException ex) {
                  System.out.println("Fallo la conexion");
              }
-             System.out.println(Nodos);
         }
         
     }
@@ -292,10 +294,11 @@ public class NodoEnMalla {
                     DataOutputStream out = new DataOutputStream(elsocket.getOutputStream());
                     out.writeUTF("¿Queeres?");
                     String mensaje = in.readUTF();
-                    switch(mensaje)
+                    String[] arrSplit = mensaje.split(" ");
+                    switch(arrSplit[0])
                     { 
                         case "Nodo":
-                            Nodos.add(portInicial);
+                            Nodos.add(Integer.parseInt(arrSplit[1]));
                             break;
                         default:
                             System.out.println("Este puerto es basura");

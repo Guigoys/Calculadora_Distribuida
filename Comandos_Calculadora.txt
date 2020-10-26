@@ -1,13 +1,22 @@
 Cliente java->
 
-java --module-path "C:\Program Files\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.fxml -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\Calculadora\Calculadora_ClienteAnt\dist\Calculadora_ClienteAnt.jar"
+java --module-path "C:\Program Files\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.fxml -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\Calculadora_ClienteAnt\dist\Calculadora_ClienteAnt.jar"
 
 *****************************************************************************
 Nodo ->
 
-java -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\Calculadora\CalculadoraNodoEnMalla\dist\CalculadoraNodoEnMalla.jar"
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraNodoEnMalla\dist\CalculadoraNodoEnMalla.jar"
 
 *****************************************************************************
 Servidor ->
 
-java -jar "D:\Home\Documentos\7mo semestre\Computo distribuido\Calculadora\CalculadoraServidor\dist\CalculadoraServidor.jar"
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraServidor\dist\CalculadoraServidor.jar"
+
+Suma
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraServidor_Suma\dist\CalculadoraServidor_Suma.jar"
+Resta
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraServidor_Resta\dist\CalculadoraServidor_Resta.jar"
+Multiplicacion
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraServidor_Multi\dist\CalculadoraServidor_Multi.jar"
+Division
+java -jar "D:\Home\Documentos\7mosemestre\Computodistribuido\Calculadora\CalculadoraServidor_Division\dist\CalculadoraServidor_Division.jar"

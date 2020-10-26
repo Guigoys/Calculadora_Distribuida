@@ -22,7 +22,14 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-
+import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import javafx.application.Platform;
+import javafx.scene.control.Alert.AlertType;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 /**
  * FXML Controller class
  *
@@ -78,6 +85,10 @@ public class CalculadoraController implements Initializable {
     
     double acumulador=0;
     char operacion='0';
+    int puerto;
+    Thread T1;
+    ServerSocket Llegada;
+    String huella;
     @FXML
     private Button igual;
     /**
@@ -85,8 +96,14 @@ public class CalculadoraController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        ServerSocket Llegada = create(6000);
-        
+        try {
+            huella =   sha1(String.valueOf(System.currentTimeMillis()));
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.print(huella);
+        Llegada = create(6000);
+        puerto = Llegada.getLocalPort();
         String mensaje="";
         final String HOST ="127.0.0.1";
         int PUERTO =8000;
@@ -123,12 +140,12 @@ public class CalculadoraController implements Initializable {
         NodoAConectar = Integer.parseInt(mensaje);
         
         HiloRecibir Recibir = new HiloRecibir(Llegada);
-        Thread T1 = new Thread(Recibir);
+        T1 = new Thread(Recibir);
         T1.start();
     }
 
     public ServerSocket create(int ports){
-        for (int port= ports;port < 7000; port++) {
+        for (int port= ports;port < 7000; port+= 5) {
             try {
                 return new ServerSocket(port);
             } catch (IOException ex) {
@@ -251,49 +268,58 @@ public class CalculadoraController implements Initializable {
         Res.setText(acum);
     }
     
-    String sumat="";
-    String restt="";
-    String multt="";
-    String divit="";
-    List<String> Sumas = new ArrayList<String>(); 
-    List<String> Restas = new ArrayList<String>();
-    List<String> Multiplicaciones= new ArrayList<String>();
-    List<String> Divisiones = new ArrayList<String>();
+    List<Evento> Sumas = new ArrayList<Evento>(); 
+    List<Evento> Restas = new ArrayList<Evento>();
+    List<Evento> Multiplicaciones= new ArrayList<Evento>();
+    List<Evento> Divisiones = new ArrayList<Evento>();
+    List<Servi> Servidores_s = new ArrayList<Servi>();
+    List<Servi> Servidores_r = new ArrayList<Servi>();
+    List<Servi> Servidores_m = new ArrayList<Servi>();
+    List<Servi> Servidores_d = new ArrayList<Servi>();
     
+    public class Servi {
+        String Servidor;
+        boolean Aparecio;
+    }     
+            
     @FXML
     private void botonigua(ActionEvent event) {
         String[] arrSplit = acum.split(" ");
-        
+        Thread Time = null;
         String total=arrSplit[0] + " "+ arrSplit[2];
         switch(operacion)
         {
+            
             case '1':
-                Sumas.add(acum);
-                sumat=sumat+"\n"+acum;
-                //ImpSuma.appendText(sumat);
-                conexion(("1 "+total),'+');
+                Sumas.add(new Evento(Sumas.size(),total));
+                conexion(("1 "+(Sumas.size()-1)+" "+huella+" "+total),'+');
+                Time_max_s Cont_t = new Time_max_s();
+                Time = new Thread(Cont_t);
                 break;
             case '2':
-                Restas.add(acum);
-                restt=restt+"\n"+acum;
-                conexion(("2 "+total),'-');
-                //ImpRest.appendText(restt);
+                Restas.add(new Evento(Restas.size(),total));
+                conexion(("2 "+(Restas.size()-1)+" "+huella+" "+total),'-');
+                Time_max_r Cont_u = new Time_max_r();
+                Time = new Thread(Cont_u);
                 break;
             case '3':
-                Multiplicaciones.add(acum);
-                multt=multt+"\n"+acum;
-                conexion(("3 "+total),'*');
-                //ImpMult.appendText(multt);
+                Multiplicaciones.add(new Evento(Multiplicaciones.size(),total));
+                conexion(("3 "+(Multiplicaciones.size()-1)+" "+huella+" "+total),'*');
+                Time_max_m Cont_v = new Time_max_m();
+                Time = new Thread(Cont_v);
                 break;
             case '4':
-                Divisiones.add(acum);
-                divit=divit+"\n"+acum;
-                conexion(("4 "+total),'/');
-                //ImpDivi.appendText(acum + "\n");
+                Divisiones.add(new Evento(Divisiones.size(),total));
+                conexion(("4 "+(Divisiones.size()-1)+" "+huella+" "+total),'/');
+                Time_dax_d Cont_w = new Time_dax_d();
+                Time = new Thread(Cont_w);
                 break;
         }
+
+        Time.start();
         acum="";
         Res.setText(acum);
+        
     }
     public void conexion(String Total, char operacion)
     {
@@ -317,6 +343,7 @@ public class CalculadoraController implements Initializable {
             System.out.println("Fallo, error en la conexcion");
         }
     }
+
     public class HiloRecibir implements Runnable{
 
         ServerSocket A;
@@ -343,26 +370,69 @@ public class CalculadoraController implements Initializable {
                     System.out.println("Fallo la conexion");
                 }
                 String[] arrSplit = Mensaje.split(" ");
-                if(Integer.parseInt(arrSplit[0]) >= 5)
+                int ajuste = Math.max(0, huella.length() - 4);
+                String huella1 = huella.substring(0, ajuste);
+                if(Integer.parseInt(arrSplit[0]) >= 5 && (arrSplit[2].equals(huella1)|| arrSplit[2].equals(huella)))
                 {
                     String Total ="";
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     switch (arrSplit[0])
                     {
                         case "5":
-                            Total = arrSplit[1] +" + "+  arrSplit[2]+ " = " + arrSplit[3];
-                            ImpSuma.appendText(Total + "\n");
+                            Total = arrSplit[3] +" + "+  arrSplit[4]+ " = " + arrSplit[5];
+                            Evento S = Sumas.get(Integer.parseInt(arrSplit[1]));
+                            if(S.resultado == -123)
+                            {
+                                S.resultado = Double.parseDouble(arrSplit[5]);
+                                Sumas.set(Integer.parseInt(arrSplit[1]),S);
+                                if(recibos_s>=recibos_nesesarios)
+                                {
+                                    ImpSuma.appendText(Total + "\n"); 
+                                }
+                                  
+                            }
                             break;
                         case "6":
-                            Total = arrSplit[1] +" - "+  arrSplit[2]+ " = " + arrSplit[3];
-                            ImpRest.appendText(Total+ "\n");
+                            Total = arrSplit[3] +" - "+  arrSplit[4]+ " = " + arrSplit[5];
+                            Evento B = Restas.get(Integer.parseInt(arrSplit[1]));
+                            if(B.resultado==-123){
+                                B.resultado = Double.parseDouble(arrSplit[5]);
+                                Restas.set(Integer.parseInt(arrSplit[1]),B);
+                                if(recibos_r>=recibos_nesesarios)
+                                {
+                                   ImpRest.appendText(Total+ "\n");
+                                }
+                            }
                             break;
                         case "7":
-                            Total = arrSplit[1] +" * "+  arrSplit[2]+ " = " + arrSplit[3];
-                            ImpMult.appendText(Total+ "\n");
+                            Total = arrSplit[3] +" * "+  arrSplit[4]+ " = " + arrSplit[5];
+                            Evento C = Multiplicaciones.get(Integer.parseInt(arrSplit[1]));
+                            if(C.resultado==-123){
+                            C.resultado = Double.parseDouble(arrSplit[5]);
+                            Multiplicaciones.set(Integer.parseInt(arrSplit[1]),C);
+                            if(recibos_m>=recibos_nesesarios)
+                                {
+                                   ImpMult.appendText(Total+ "\n");
+                                }
+                            
+                            }
                             break;
                         case "8":
-                            Total = arrSplit[1] +" / "+  arrSplit[2]+ " = " + arrSplit[3];
-                            ImpDivi.appendText(Total+ "\n");
+                            Total = arrSplit[3] +" / "+  arrSplit[4]+ " = " + arrSplit[5];
+                            Evento D = Divisiones.get(Integer.parseInt(arrSplit[1]));
+                            if(D.resultado==-123){
+                            D.resultado = Double.parseDouble(arrSplit[5]);
+                            Divisiones.set(Integer.parseInt(arrSplit[1]),D);
+                            if(recibos_d>=recibos_nesesarios)
+                                {
+                                    ImpDivi.appendText(Total+ "\n");
+                                }
+                           
+                            }
                             break;
                     }
                 }
@@ -373,8 +443,537 @@ public class CalculadoraController implements Initializable {
         }
 
     }
+    public class Evento
+    {
+        int numEvento;
+        String operacion;
+        public double resultado = -123;
+        
+        public Evento(int Num, String op)
+        {
+            numEvento = Num;
+            operacion  = op;
+        }
+    }
     
+    int recibos_s=0;
+    int recibos_r=0;
+    int recibos_m=0;
+    int recibos_d=0;
+    int recibos_nesesarios = 3;
+    
+    
+    public  class Contador_Tickets_s implements Runnable{
+
+        boolean exit = true;
+        ServerSocket Tickets;
+        
+        Contador_Tickets_s(ServerSocket Tickets){
+        this.Tickets = Tickets;
+        }
+        
+        @Override
+        public void run() {
+            for(int i = 0; i < Servidores_s.size();i++)
+                    {
+                        Servi A = new Servi();
+                        A.Aparecio = false ;
+                        A.Servidor = Servidores_s.get(i).Servidor;
+                        Servidores_s.set(i,A);
+                    }
+            while(exit){
+                Socket elsocket;
+                String Mensaje="";
+                
+                try{
+                    System.out.println("Se acaba de conectar "+Tickets.getLocalPort());
+                    elsocket = Tickets.accept();
+                    DataInputStream in = new DataInputStream(elsocket.getInputStream());
+                    Mensaje = in.readUTF();
+                    if(Mensaje.split(" ")[4].equals("1"))
+                    {
+                       recibos_s++;
+                    boolean A = false;
+                    System.out.println(Mensaje.split(" ")[1]);
+                    for(int i = 0; i < Servidores_s.size();i++)
+                    {
+                        if(Servidores_s.get(i).Servidor.equals(Mensaje.split(" ")[1]))
+                        {
+                            Servidores_s.get(i).Aparecio=true;
+                            A=true;
+                            break;
+                        }
+                    }
+                    if(!A)
+                    {
+                        Servi aux = new Servi();
+                        aux.Aparecio=true;
+                        aux.Servidor= Mensaje.split(" ")[1];
+                        Servidores_s.add(aux);
+                    } 
+                    }
+                    System.out.println(Mensaje);
+                    elsocket.close();
+                } catch (IOException ex) {
+                    break;
+                }  
+            }
+        }
+        
+    }
+    
+    public class Time_max_s implements Runnable
+    {
+
+        @Override
+        public void run() {
+            recibos_s = 0;
+            try {
+                long start = System.nanoTime();
+                ServerSocket Juas = new ServerSocket(puerto+1);
+                Contador_Tickets_s contar = new Contador_Tickets_s(Juas);
+                Thread Vamoaver = new Thread(contar);
+                Vamoaver.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Juas.close();
+                Juas=null;
+                System.out.println("Se encontraron "+recibos_s + " de suma");
+                if(recibos_s<recibos_nesesarios){
+                    Platform.runLater(() -> {
+                        Platform.runLater(() -> {
+                        Alert alert = new Alert(AlertType.INFORMATION);
+                        alert.setTitle("Error");
+                        alert.setHeaderText(null);
+                        alert.setContentText("No hay suficientes servidores, intentelo mas tarde");
+                        alert.showAndWait();
+                    });
+                    });
+                     for(int i = 0; i < Servidores_s.size();i++)
+                    {
+                        System.out.println(Servidores_s.get(i).Servidor +" este esta "+ Servidores_s.get(i).Aparecio);
+                        if (!Servidores_s.get(i).Aparecio)
+                        {
+                            //Mandar a levantar
+                            int j=0;
+                            String ServUp ="";
+                            while(j<Servidores_s.size())
+                            {
+                                if (Servidores_s.get(j).Aparecio)
+                                {
+                                    ServUp = Servidores_s.get(j).Servidor;
+                                    j=Servidores_s.size()+20;
+                                }
+                                j++;
+                            }
+                            Levanta Fall = new Levanta(Servidores_s.get(i).Servidor,ServUp);
+                            Thread Lev = new Thread(Fall);
+                            Lev.start();
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
+    public  class Contador_Tickets_r implements Runnable{
+
+        boolean exit = true;
+        ServerSocket Tickets;
+        
+        Contador_Tickets_r(ServerSocket Tickets){
+        this.Tickets = Tickets;
+        }
+        
+        @Override
+        public void run() {
+            for(int i = 0; i < Servidores_r.size();i++)
+                    {
+                        Servi A = new Servi();
+                        A.Aparecio = false ;
+                        A.Servidor = Servidores_r.get(i).Servidor;
+                        Servidores_r.set(i,A);
+                    }
+            while(exit){
+                Socket elsocket;
+                String Mensaje="";
+                
+                try{
+                    System.out.println("Se acaba de conectar "+Tickets.getLocalPort());
+                    elsocket = Tickets.accept();
+                    DataInputStream in = new DataInputStream(elsocket.getInputStream());
+                    Mensaje = in.readUTF();
+                    if(Mensaje.split(" ")[4].equals("1"))
+                    {
+                       recibos_r++;
+                    boolean A = false;
+                    System.out.println(Mensaje.split(" ")[1]);
+                    for(int i = 0; i < Servidores_r.size();i++)
+                    {
+                        if(Servidores_r.get(i).Servidor.equals(Mensaje.split(" ")[1]))
+                        {
+                            Servidores_r.get(i).Aparecio=true;
+                            A=true;
+                            break;
+                        }
+                    }
+                    if(!A)
+                    {
+                        Servi aux = new Servi();
+                        aux.Aparecio=true;
+                        aux.Servidor= Mensaje.split(" ")[1];
+                        Servidores_r.add(aux);
+                    } 
+                    }
+                    System.out.println(Mensaje);
+                    elsocket.close();
+                } catch (IOException ex) {
+                    break;
+                }  
+            }
+        }
+        
+    }
+    
+    public class Time_max_r implements Runnable
+    {
+
+        @Override
+        public void run() {
+            recibos_r = 0;
+            try {
+                long start = System.nanoTime();
+                ServerSocket Juas1 = new ServerSocket(puerto+2);
+                Contador_Tickets_r contar1 = new Contador_Tickets_r(Juas1);
+                Thread Vamoaver = new Thread(contar1);
+                Vamoaver.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Juas1.close();
+                Juas1=null;
+                System.out.println("Se encontraron "+recibos_r + " de resta");
+                if(recibos_r<recibos_nesesarios){
+                Platform.runLater(() -> {
+                            Platform.runLater(() -> {
+                            Alert alert = new Alert(AlertType.INFORMATION);
+                            alert.setTitle("Error");
+                            alert.setHeaderText(null);
+                            alert.setContentText("No hay suficientes servidores, intentelo mas tarde");
+                            alert.showAndWait();
+                        });
+                        });}
+                for(int i = 0; i < Servidores_r.size();i++)
+                    {
+                        System.out.println(Servidores_r.get(i).Servidor +" este esta "+ Servidores_r.get(i).Aparecio);
+                        if (!Servidores_r.get(i).Aparecio)
+                        {
+                            //Mandar a levantar
+                            int j=0;
+                            String ServUp ="";
+                            while(j<Servidores_r.size())
+                            {
+                                if (Servidores_r.get(j).Aparecio)
+                                {
+                                    ServUp = Servidores_r.get(j).Servidor;
+                                    j=Servidores_r.size()+20;
+                                }
+                                j++;
+                            }
+                            Levanta Fall = new Levanta(Servidores_r.get(i).Servidor,ServUp);
+                            Thread Lev = new Thread(Fall);
+                            Lev.start();
+                        }
+                    }
+            } catch (IOException ex) {
+                Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
+    public  class Contador_Tickets_m implements Runnable{
+
+        boolean exit = true;
+        ServerSocket Tickets;
+        
+        Contador_Tickets_m(ServerSocket Tickets){
+        this.Tickets = Tickets;
+        }
+        
+        @Override
+        public void run() {
+            for(int i = 0; i < Servidores_m.size();i++)
+                    {
+                        Servi A = new Servi();
+                        A.Aparecio = false ;
+                        A.Servidor = Servidores_m.get(i).Servidor;
+                        Servidores_m.set(i,A);
+                    }
+            while(exit){
+                Socket elsocket;
+                String Mensaje="";
+                
+                try{
+                    System.out.println("Se acaba de conectar "+Tickets.getLocalPort());
+                    elsocket = Tickets.accept();
+                    DataInputStream in = new DataInputStream(elsocket.getInputStream());
+                    Mensaje = in.readUTF();
+                    if(Mensaje.split(" ")[4].equals("1"))
+                    {
+                       recibos_m++;
+                    boolean A = false;
+                    System.out.println(Mensaje.split(" ")[1]);
+                    for(int i = 0; i < Servidores_m.size();i++)
+                    {
+                        if(Servidores_m.get(i).Servidor.equals(Mensaje.split(" ")[1]))
+                        {
+                            Servidores_m.get(i).Aparecio=true;
+                            A=true;
+                            break;
+                        }
+                    }
+                    if(!A)
+                    {
+                        Servi aux = new Servi();
+                        aux.Aparecio=true;
+                        aux.Servidor= Mensaje.split(" ")[1];
+                        Servidores_m.add(aux);
+                    } 
+                    }
+                    System.out.println(Mensaje);
+                    elsocket.close();
+                } catch (IOException ex) {
+                    break;
+                }  
+            }
+        }
+        
+    }
+    
+    public class Time_max_m implements Runnable
+    {
+
+        @Override
+        public void run() {
+            recibos_m = 0;
+            try {
+                long start = System.nanoTime();
+                ServerSocket Juas = new ServerSocket(puerto+3);
+                Contador_Tickets_m contar = new Contador_Tickets_m(Juas);
+                Thread Vamoaver = new Thread(contar);
+                Vamoaver.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Juas.close();
+                Juas=null;
+                System.out.println("Se encontraron "+recibos_m + " de multiplicacion");
+                if(recibos_m<recibos_nesesarios){
+                Platform.runLater(() -> {
+                            Platform.runLater(() -> {
+                            Alert alert = new Alert(AlertType.INFORMATION);
+                            alert.setTitle("Error");
+                            alert.setHeaderText(null);
+                            alert.setContentText("No hay suficientes servidores, intentelo mas tarde");
+                            alert.showAndWait();
+                        });
+                        });}
+                for(int i = 0; i < Servidores_m.size();i++)
+                    {
+                        System.out.println(Servidores_m.get(i).Servidor +" este esta "+ Servidores_m.get(i).Aparecio);
+                        if (!Servidores_m.get(i).Aparecio)
+                        {
+                            //Mandar a levantar
+                            int j=0;
+                            String ServUp ="";
+                            while(j<Servidores_m.size())
+                            {
+                                if (Servidores_m.get(j).Aparecio)
+                                {
+                                    ServUp = Servidores_m.get(j).Servidor;
+                                    j=Servidores_m.size()+20;
+                                }
+                                j++;
+                            }
+                            Levanta Fall = new Levanta(Servidores_m.get(i).Servidor,ServUp);
+                            Thread Lev = new Thread(Fall);
+                            Lev.start();
+                        }
+                    }
+            } catch (IOException ex) {
+                Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
+    public  class Contador_Tickets_d implements Runnable{
+
+        boolean exit = true;
+        ServerSocket Tickets;
+        
+        Contador_Tickets_d(ServerSocket Tickets){
+        this.Tickets = Tickets;
+        }
+        
+        @Override
+        public void run() {
+            for(int i = 0; i < Servidores_d.size();i++)
+                    {
+                        Servi A = new Servi();
+                        A.Aparecio = false ;
+                        A.Servidor = Servidores_d.get(i).Servidor;
+                        Servidores_d.set(i,A);
+                    }
+            while(exit){
+                Socket elsocket;
+                String Mensaje="";
+                
+                try{
+                    System.out.println("Se acaba de conectar "+Tickets.getLocalPort());
+                    elsocket = Tickets.accept();
+                    DataInputStream in = new DataInputStream(elsocket.getInputStream());
+                    Mensaje = in.readUTF();
+                    if(Mensaje.split(" ")[4].equals("1"))
+                    {
+                       recibos_d++;
+                    boolean A = false;
+                    System.out.println(Mensaje.split(" ")[1]);
+                    for(int i = 0; i < Servidores_d.size();i++)
+                    {
+                        if(Servidores_d.get(i).Servidor.equals(Mensaje.split(" ")[1]))
+                        {
+                            Servidores_d.get(i).Aparecio=true;
+                            A=true;
+                            break;
+                        }
+                    }
+                    if(!A)
+                    {
+                        Servi aux = new Servi();
+                        aux.Aparecio=true;
+                        aux.Servidor= Mensaje.split(" ")[1];
+                        Servidores_d.add(aux);
+                    } 
+                    }
+                    System.out.println(Mensaje);
+                    elsocket.close();
+                } catch (IOException ex) {
+                    break;
+                }  
+            }
+        }
+        
+    }
+    
+    public class Time_dax_d implements Runnable
+    {
+
+        @Override
+        public void run() {
+            recibos_d = 0;
+            try {
+                long start = System.nanoTime();
+                ServerSocket Juas = new ServerSocket(puerto+4);
+                Contador_Tickets_d contar = new Contador_Tickets_d(Juas);
+                Thread Vamoaver = new Thread(contar);
+                Vamoaver.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Juas.close();
+                Juas=null;
+                System.out.println("Se encontraron "+recibos_d + " de division");
+                if(recibos_s<recibos_nesesarios){
+                Platform.runLater(() -> {
+                            Platform.runLater(() -> {
+                            Alert alert = new Alert(AlertType.INFORMATION);
+                            alert.setTitle("Error");
+                            alert.setHeaderText(null);
+                            alert.setContentText("No hay suficientes servidores, intentelo mas tarde");
+                            alert.showAndWait();
+                        });
+                        });}
+                for(int i = 0; i < Servidores_d.size();i++)
+                    {
+                        System.out.println(Servidores_d.get(i).Servidor +" este esta "+ Servidores_d.get(i).Aparecio);
+                        if (!Servidores_d.get(i).Aparecio)
+                        {
+                            //Mandar a levantar
+                            int j=0;
+                            String ServUp ="";
+                            while(j<Servidores_d.size())
+                            {
+                                if (Servidores_d.get(j).Aparecio)
+                                {
+                                    ServUp = Servidores_d.get(j).Servidor;
+                                    j=Servidores_d.size()+20;
+                                }
+                                j++;
+                            }
+                            Levanta Fall = new Levanta(Servidores_d.get(i).Servidor,ServUp);
+                            Thread Lev = new Thread(Fall);
+                            Lev.start();
+                        }
+                    }
+            } catch (IOException ex) {
+                Logger.getLogger(CalculadoraController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
+    static String sha1(String input) throws NoSuchAlgorithmException {
+        MessageDigest mDigest = MessageDigest.getInstance("SHA1");
+        byte[] result = mDigest.digest(input.getBytes());
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < result.length; i++) {
+            sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
+        }
+         
+        return sb.toString();
+    }
+    
+    public class Levanta implements Runnable
+    {
+        String huella;
+        String Activo;
+        
+        Levanta(String huella, String Activo){
+            this.huella=huella;
+            this.Activo = Activo;
+        }
+        
+        @Override
+        public void run() {
+            String mensaje="";
+            final String HOST ="127.0.0.1";
+            DataOutputStream out;
+
+
+
+            try {
+                Socket elsocket = new Socket(HOST,NodoAConectar);
+                out = new DataOutputStream(elsocket.getOutputStream());
+
+                out.writeUTF("0 "+huella+" "+Activo);
+
+
+                elsocket.close();
+
+            } catch (IOException ex) {
+                System.out.println("Fallo, error en la conexcion");
+            }
+        }
+        
+    }
 }
-
-
-
