@@ -8,8 +8,13 @@ package calculadoraservidor;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,68 +111,53 @@ import java.util.logging.Logger;
         @Override
         public void run() {
 
-            try {
-                Process process = null;
-                String[] Separa = Mensaje.split(" ");
-                switch (Separa[0])
-                {
-                    case "0":
-
-                        if(Separa[2].equals(huella))
-                        {
-                            System.out.println("Debo levantar a "+ Separa[1]);
-                            System.out.println("cmd /c java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor\\dist\\CalculadoraServidor.jar\" \"C:\\Users\\Hp\\Desktop\\"+Separa[1]+"\"");
-                            process = Runtime.getRuntime().exec("cmd /c java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor\\dist\\CalculadoraServidor.jar\" \"C:\\Users\\Hp\\Desktop\\"+Separa[1]+"\"");
-                        }
-                        break;
-                    case "1":
-                    {
-                        if (ope1.equals("1"))
-                        {
-                        try {
-                            process = Runtime.getRuntime().exec("cmd /c start java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor_Suma\\dist\\CalculadoraServidor_Suma.jar\" "+ Mensaje+" "+ mipuerto + " " + puerto);
-                        } catch (IOException ex) {
-                            Logger.getLogger(RecibirDatos.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        }
-                    }
+            String[] Separa = Mensaje.split(" ");
+            URL[] classLoaderUrls;
+            URLClassLoader urlClassLoader;
+            Class<?> clazz;
+            String class_name = "";
+            switch (Separa[0]) {
+                case "1":
+                    class_name = "Sumar";
                     break;
-                    
-                    case "2":
-                    {
-                        if (ope2.equals("1")){
-                        try {
-                            process = Runtime.getRuntime().exec("cmd /c start java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor_Resta\\dist\\CalculadoraServidor_Resta.jar\" "+ Mensaje+" "+ mipuerto + " " + puerto);
-                        } catch (IOException ex) {
-                            Logger.getLogger(RecibirDatos.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        }
-                    }
+                case "2":
+                    class_name = "Restar";
                     break;
-                    
-                    case "3":
-                    {
-                        if (ope3.equals("1")){
-                        try {
-                            process = Runtime.getRuntime().exec("cmd /c start java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor_Multi\\dist\\CalculadoraServidor_Multi.jar\" "+ Mensaje+" "+ mipuerto + " " + puerto);
-                        } catch (IOException ex) {
-                            Logger.getLogger(RecibirDatos.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        }
-                    }
+                case "3":
+                    class_name = "Multiplicar";
                     break;
-                    
-                    case "4":
-                        if (ope4.equals("1"))
-                        {
-                        process = Runtime.getRuntime().exec("cmd /c start java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor_Division\\dist\\CalculadoraServidor_Division.jar\" "+ Mensaje+" "+ mipuerto + " " + puerto);
-                        }
-                        break;
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(RecibirDatos.class.getName()).log(Level.SEVERE, null, ex);
+                case "4":
+                    class_name = "Dividir";
+                    break;
             }
-                    
+            
+            try {
+                System.out.println("CALLING " + class_name + ".jar");
+                classLoaderUrls = new URL[]{new URL("file:////D:/Home/Documentos/7mosemestre/Computodistribuido/Calculadora/CalculadoraServidor/" +class_name + ".jar")};
+                urlClassLoader = new URLClassLoader(classLoaderUrls);
+                clazz = urlClassLoader.loadClass(class_name.toLowerCase()+ "." +class_name);
+                Constructor<?> ct = clazz.getConstructor(String.class, int.class);
+                ct.newInstance( Mensaje, puerto);
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
             
         }
         

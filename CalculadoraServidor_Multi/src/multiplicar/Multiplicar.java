@@ -1,4 +1,4 @@
-package calculadoraservidor;
+package multiplicar;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class CalculadoraServidor {
+public class Multiplicar {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        System.out.println(args.length);
+    public Multiplicar(String Mensaje, int puerto) throws IOException, InterruptedException {
+        String[] args = Mensaje.split(" ");
         String Resul = "";
         double num1 = Integer.parseInt(args[3]);
         double num2 = Integer.parseInt(args[4]);
@@ -19,7 +19,7 @@ public class CalculadoraServidor {
         final String HOST ="127.0.0.1";
         DataOutputStream out;
         try {
-            Socket elsocket = new Socket(HOST,Integer.parseInt(args[6]));
+            Socket elsocket = new Socket(HOST,puerto);
             out = new DataOutputStream(elsocket.getOutputStream());
             
             out.writeUTF(Resul);
