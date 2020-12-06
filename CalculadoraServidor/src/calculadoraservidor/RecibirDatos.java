@@ -7,6 +7,7 @@ package calculadoraservidor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -15,6 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +32,11 @@ import java.util.logging.Logger;
     String op2;
     String op3;
     String op4;
+    
+    int TengoSuma=0;
+    int TengoResta=0;
+    int TengoMulti=0;
+    int TengoDivi=0;
 
     public RecibirDatos(ServerSocket ports,String huella, String puerto, String op1, String op2, String op3, String op4) throws IOException {
         this.SocketServidor = ports;
@@ -47,6 +54,7 @@ import java.util.logging.Logger;
         {
             Socket elsocket;
             String Mensaje="";
+            int i=0;
              try {
                 System.out.println("Se acaba de conectar "+SocketServidor.getLocalPort());
                 elsocket = SocketServidor.accept();
@@ -55,20 +63,86 @@ import java.util.logging.Logger;
                 Mensaje = in.readUTF();
                 System.out.println(Mensaje);
                 String[] arrSplit = Mensaje.split(" ");
-                String j="";
+                i=Integer.parseInt(arrSplit[0]);
+                String j="0";
+                Process process = null;
                 switch(arrSplit[0])
                 {
+                    case "0":
+                    if(arrSplit[2].equals(huella))
+                    {
+                        if(arrSplit[1].equals("1")||arrSplit[1].equals("2")||arrSplit[1].equals("3")||arrSplit[1].equals("4")){
+                            byte[] decode = Base64.getDecoder().decode(arrSplit[3]);
+                            try {
+                                switch (arrSplit[1]){
+                                    case "1":
+                                        writeBytesToFile("D:/Home/Documentos/7mosemestre/Computodistribuido/Calculadora/CalculadoraServidor/Sumar.jar", decode);
+                                        TengoSuma=1;
+                                        break;
+                                    case "2":
+                                        writeBytesToFile("D:/Home/Documentos/7mosemestre/Computodistribuido/Calculadora/CalculadoraServidor/Restar.jar", decode);
+                                        TengoResta=1;
+                                        break;
+                                    case "3":
+                                        writeBytesToFile("D:/Home/Documentos/7mosemestre/Computodistribuido/Calculadora/CalculadoraServidor/Multiplicar.jar", decode);
+                                        TengoMulti=1;
+                                        break;
+                                    case "4":
+                                        writeBytesToFile("D:/Home/Documentos/7mosemestre/Computodistribuido/Calculadora/CalculadoraServidor/Dividir.jar", decode);
+                                        TengoDivi=1;
+                                        break;    
+                                }
+                            } catch (IOException ex) {
+                                System.out.println("Error al crear el archivo");
+                            }
+                        }
+                        else
+                        {
+                        System.out.println("Debo levantar a "+ arrSplit[1]);
+                        System.out.println("cmd /c java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor\\dist\\CalculadoraServidor.jar\" \"C:\\Users\\Hp\\Desktop\\"+arrSplit[1]+"\"");
+                        process = Runtime.getRuntime().exec("cmd /c java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\Calculadora\\CalculadoraServidor\\dist\\CalculadoraServidor.jar\" \"C:\\Users\\Hp\\Desktop\\"+arrSplit[1]+"\"");
+                        }
+                    }
+                    break;
                     case "1":
-                        j=op1;
+                        if(TengoSuma==1)
+                        {
+                            j=op1;
+                        }
+                        else
+                        {
+                            i=0;
+                        }
                         break;
                     case "2":
+                        if(TengoResta==1)
+                        {
                         j=op2;
+                        }
+                        else
+                        {
+                            i=0;
+                        }
                         break;
                     case "3":
+                        if(TengoMulti==1)
+                        {
                         j=op3;
+                        }
+                        else
+                        {
+                            i=0;
+                        }
                         break;
                     case "4":
+                        if(TengoDivi==1)
+                        {
                         j=op4;
+                        }
+                        else
+                        {
+                            i=0;
+                        }
                         break;
                 }
                 out.writeUTF("9 "+huella+ " " + arrSplit[0]+ " " +arrSplit[2] + " " +j);
@@ -78,15 +152,23 @@ import java.util.logging.Logger;
              }
              
             //Process process = Runtime.getRuntime().exec("cmd /c start java -jar \"D:\\Home\\Documentos\\7mosemestre\\Computodistribuido\\ClasesJava\\Pruebas\\dist\\Pruebas.jar\" " +num1 +" "+num2 + " "+ SocketServidor.getLocalPort());
-             
+            if(i>0)
+            { 
             Operacion A = new Operacion(Mensaje,puerto,SocketServidor.getLocalPort(),op1,op2,op3,op4);
             Thread ta = new Thread(A);
             ta.start();
+            }
                     
         }
 
 
     }
+    private void writeBytesToFile(String dDivisionjar, byte[] bytes) throws IOException{
+         try (FileOutputStream fos = new FileOutputStream(dDivisionjar)) {
+            fos.write(bytes);
+        }
+    }
+    
     public class Operacion implements Runnable
     {
         String Mensaje;
@@ -110,7 +192,6 @@ import java.util.logging.Logger;
         
         @Override
         public void run() {
-
             String[] Separa = Mensaje.split(" ");
             URL[] classLoaderUrls;
             URLClassLoader urlClassLoader;
@@ -160,6 +241,7 @@ import java.util.logging.Logger;
             }
             
         }
+        
         
     }
  }
