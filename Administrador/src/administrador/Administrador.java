@@ -62,13 +62,13 @@ public class Administrador {
                     MensajeFinal = "0 " + Destino + " " + op1;
                     break;
                 case "2":
-                    MensajeFinal = "0 " + Destino + " " + op1;
+                    MensajeFinal = "0 " + Destino + " " + op2;
                     break;
                 case "3":
-                    MensajeFinal = "0 " + Destino + " " + op1;
+                    MensajeFinal = "0 " + Destino + " " + op3;
                     break;
                 case "4":
-                    MensajeFinal = "0 " + Destino + " " + op1;
+                    MensajeFinal = "0 " + Destino + " " + op4;
                     break;
             }
             try {
